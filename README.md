@@ -107,9 +107,9 @@ Every plugin is **opt-in**, so your final bundle stays as small as possible.
 ## 1️⃣ Installation
 
 ```bash
-# Clone the repo
-git clone https://github.com/gokhanaltun/litewing-js.git
-cd litewing-js
+# Create new project
+npx litewing my-project
+cd my-project
 
 # Install dependencies
 npm install

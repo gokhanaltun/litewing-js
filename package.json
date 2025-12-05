@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Minimal vanilla JS utility library with plugin system",
   "type": "module",
-  "bin": {
-    "create-litewing": "./litewing-cli.js"
-  },
+  "bin": "./litewing-cli.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gokhanaltun/litewing-js.git"
