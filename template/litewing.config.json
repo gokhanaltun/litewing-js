@@ -1,0 +1,5 @@
+{
+  "out": "build",
+  "corePlugins": ["events", "classes", "attributes", "contents", "actions", "traversal"],
+  "plugins": []
+}

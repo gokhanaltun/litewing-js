@@ -1,0 +1,28 @@
+{
+  "name": "litewing",
+  "version": "1.0.0",
+  "description": "Minimal vanilla JS utility library with plugin system",
+  "type": "module",
+  "bin": {
+    "create-litewing": "./litewing-cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gokhanaltun/litewing-js.git"
+  },
+  "keywords": [
+    "javascript",
+    "utility",
+    "plugin",
+    "vanilla-js",
+    "build",
+    "litewing",
+    "litewing-js"
+  ],
+  "author": "Gökhan Altun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gokhanaltun/litewing-js/issues"
+  },
+  "homepage": "https://github.com/gokhanaltun/litewing-js#readme"
+}
