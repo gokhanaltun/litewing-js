@@ -8,13 +8,12 @@
 import { ref, ready } from 'litewing.min.js';
 
 ready(() => {
-    ref('#button')
-        .onClick((e, target) => {
-            target.addClass('active').text('Clicked!');
-        }).text('Click Me');
+    ref('#button').onClick(({event, target, currentTarget}) => {
+        target.addClass('active').text('Clicked!');
+    }).text('Click Me');
 });
 ```
-
+---
 
 ## 💭 What is LiteWing?
 
@@ -23,100 +22,100 @@ You're already writing vanilla JavaScript. LiteWing just makes it **nicer, clean
 ### Without LiteWing
 
 ```javascript
-const button = document.querySelector('#button');
-button.addEventListener('click', (e) => {
+const btn = document.querySelector('#button');
+btn.addEventListener('click', (e) => {
     e.target.classList.add('active');
     e.target.textContent = 'Clicked!';
 });
-button.textContent = 'Click Me';
 ```
 
 ### With LiteWing
 
 ```javascript
-ref('#button')
-    .onClick((e, target) => {
-        target.addClass('active').text('Clicked!');
-    }).text('Click Me');
+ref('#button').onClick(({target}) => {
+    target.addClass('active').text('Clicked!');
+});
 ```
 
 **Same result. Same performance. Less boilerplate.**
 
+---
 
 ## 💡 Philosophy
 
-### Vanilla JS First
+### 1. Intentionally Boring
 
-LiteWing **never replaces native JavaScript**. It's purely **syntactic sugar for readability**, not a framework.
+LiteWing avoids abstractions and keeps everything predictable.
 
-* **Zero-overhead:** No magic. No runtime. No dependencies.
-* **Minimal core:** Only essential DOM operations, events, and traversal.
-* **Plugin-based:** Need extra functionality? Add a plugin. Don’t need it? Core stays small (~2–3 KB minified).
+* **No magic:** Every method maps directly to native JavaScript
+* **No runtime:** Just syntactic sugar
+* **No lock-in:** You’re always writing real JavaScript
 
-### The Problem
+```javascript
+// LiteWing method:
+ref('#el').addClass('active');
 
-Modern frameworks are powerful but heavy. jQuery is convenient but outdated. Vanilla JS is fast but verbose.
+// Native equivalent:
+document.querySelector('#el').classList.add('active');
+```
 
-### The Solution
+---
 
-LiteWing gives **clear, concise syntax** that runs as **pure native JavaScript** with **zero runtime cost**.
+### 2. The Problem
 
+Modern frontend tools often create more complexity than they remove:
+
+* ❌ Frameworks are **overkill** for simple interactions
+* ❌ jQuery is **outdated** and heavy
+* ❌ Vanilla JavaScript becomes **verbose** and repetitive
+
+---
+
+### 3. The LiteWing Approach
+
+LiteWing keeps things light, readable, and future-proof:
+
+* ✅ **Readable:** Chainable API, less boilerplate
+* ✅ **Tiny:** ~3KB minified
+* ✅ **Honest:** No hidden behavior
+* ✅ **Timeless:** Built on web standards
+
+--- 
 
 ## 🎯 When to Use LiteWing
 
-✅ **Perfect for:**
+| ✔️ Perfect For                                         | ❌ Not Suitable For                                 |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| Server-rendered apps (PHP, Go, Python, Rails, Express) | Complex SPAs with state management (use React/Vue) |
+| Adding interactivity to static sites                   | Apps requiring a virtual DOM architecture          |
+| WordPress, Shopify, or any CMS                         | Projects already using a frontend framework        |
+| Progressive enhancement                                | Highly dynamic UI-heavy applications               |
+| Multi-page applications (MPAs)                         | Framework ecosystems that expect components        |
 
-* Server-rendered apps (PHP, Go, Python, Express, Rails)
-* Adding interactivity to static sites
-* WordPress, Shopify, or any CMS
-* Progressive enhancement
-* Multi-page applications (MPAs)
+**Rule of thumb:**
+If vanilla JS works there, LiteWing works there.
 
-❌ **Not suitable for:**
-
-* Complex SPAs with state management → Use React/Vue
-* Apps requiring virtual DOM → Use a framework
-* Projects already using a framework → Stick with it
-
-**Rule of thumb:** If vanilla JS works there, LiteWing works there.
-
+---
 
 ## 🔌 Plugin System
 
 LiteWing **stays minimal by default**. Only include what you need:
 
-```bash
-# Add a plugin
-npm run add [plugin-name]
-
-# Remove a plugin
-npm run remove [plugin-name]
-
-# List installed plugins
-npm run list
-
-# Build core + plugins
-npm run build
+```json
+{
+  "out": "dist",
+  "corePlugins": ["events", "classes", "attributes", "contents", "actions", "traversal"],
+  "optionalPlugins": [],
+  "userPlugins": {
+    "path": "",
+    "plugins": []
+  }
+}
 ```
 
 Every plugin is **opt-in**, so your final bundle stays as small as possible.
 
-
-# 📝 Documentation
-
-## 1️⃣ Installation
-
-```bash
-# Create new project
-npx litewing my-project
-cd my-project
-
-# Install dependencies
-npm install
-
-# Build core + plugins
-npm run build
-```
+---
 
 ## 📦 Real-World Example
 
@@ -132,8 +131,8 @@ npm run build
 <script type="module">
     import { ref } from './litewing.min.js';
     
-    ref('#contact-form').onSubmit(async (e) => {
-        e.preventDefault();
+    ref('#contact-form').onSubmit(async ({event}) => {
+        event.preventDefault();
         
         const email = ref('#email').prop('value');
         const message = ref('#message').prop('value');
@@ -147,10 +146,15 @@ npm run build
         
         if (response.ok) {
             ref('#status').text('Message sent!').addClass('success');
-            ref('#contact-form')[0].reset();
+            ref('#contact-form').reset();
         }
     });
 </script>
 ```
+--- 
 
-# ⚠️ Documentation in progress. Core plugins documentation coming soon.
+# 📝 Documentation
+
+- [Get Started](./docs/get-started.md)
+- [Plugins](./docs/plugins/core-plugins/core-plugins.md)
+

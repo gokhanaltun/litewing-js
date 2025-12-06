@@ -1,6 +1,13 @@
 {
   "out": "dist",
-  "corePlugins": ["events", "classes", "attributes", "contents", "actions", "traversal"],
+  "corePlugins": [
+    "events",
+    "classes",
+    "attributes",
+    "contents",
+    "actions",
+    "traversal"
+  ],
   "optionalPlugins": [],
   "userPlugins": {
     "path": "",

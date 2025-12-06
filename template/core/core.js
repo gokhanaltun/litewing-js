@@ -1,6 +1,9 @@
 class WrappedElement {
     #el;
-    constructor(el) { this.#el = el; }
+    constructor(el) { 
+        this.#el = el;
+        this.state = {}; 
+    }
     get el() { return this.#el; }
 }
 
@@ -38,10 +41,6 @@ export function asyncReady(fn) {
             run();
         }
     });
-}
-
-export function loadPlugins(...plugins) {
-    for (const plugin of plugins) plugin(WrappedElement);
 }
 
 export {WrappedElement};

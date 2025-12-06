@@ -85,17 +85,19 @@ async function build(options = {}) {
     let code = fs.readFileSync(coreFile, 'utf8');
 
     // Core plugins
-    if (config.corePlugins && config.corePlugins.length) {
+    if (config.corePlugins && config.corePlugins.length > 0) {
         code = await appendPlugins(code, CORE_PLUGINS_DIR, config.corePlugins);
+    } else {
+        code = await appendPlugins(code, CORE_PLUGINS_DIR, defaultConfig.corePlugins);
     }
 
     // Optional plugins
-    if (config.optionalPlugins && config.optionalPlugins.length) {
+    if (config.optionalPlugins && config.optionalPlugins.length > 0) {
         code = await appendPlugins(code, PLUGINS_DIR, config.optionalPlugins);
     }
 
     // User plugins
-    if (config.userPlugins && Array.isArray(config.userPlugins.plugins) && config.userPlugins.plugins.length) {
+    if (config.userPlugins && Array.isArray(config.userPlugins.plugins) && config.userPlugins.plugins.length > 0) {
         const userPath = config.userPlugins.path && config.userPlugins.path.trim()
             ? path.resolve(process.cwd(), config.userPlugins.path)
             : null;
