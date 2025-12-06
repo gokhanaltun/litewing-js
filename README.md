@@ -156,5 +156,5 @@ Every plugin is **opt-in**, so your final bundle stays as small as possible.
 # 📝 Documentation
 
 - [Get Started](./docs/get-started.md)
-- [Plugins](./docs/plugins/core-plugins/core-plugins.md)
+- [Plugins](./docs/plugins/plugins.md)
 
