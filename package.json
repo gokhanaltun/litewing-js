@@ -1,6 +1,6 @@
 {
   "name": "litewing",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Minimal vanilla JS utility library with plugin system",
   "type": "module",
   "bin": "./cli/litewing-cli.js",
