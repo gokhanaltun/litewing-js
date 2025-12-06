@@ -26,18 +26,20 @@ const defaultConfig = {
 // ----------------------------
 // CONFIG LOAD
 // ----------------------------
-function loadConfig() {
-    const templateConfig = path.join(templatePath, "litewing.config.json");
+function loadConfig(options = {}) {
+    let config = {
+        ...defaultConfig,
+        ...options
+    };
 
-    if (!fs.existsSync(templateConfig)) {
-        return defaultConfig;
+    if (options.userPlugins && typeof options.userPlugins === 'object') {
+        config.userPlugins = {
+            ...defaultConfig.userPlugins,
+            ...options.userPlugins
+        };
     }
 
-    try {
-        return JSON.parse(fs.readFileSync(templateConfig, 'utf-8'));
-    } catch {
-        return defaultConfig;
-    }
+    return config;
 }
 
 // ----------------------------
@@ -62,19 +64,12 @@ async function appendPlugins(code, baseDir, names) {
 }
 
 async function build(options = {}) {
-    let config;
+    let config = loadConfig(options);
 
-    if (options && Object.keys(options).length) {
-        config = options;
 
-    } else {
-        config = loadConfig();
-    }
-
-    const outDir = config.out && config.out.trim() ? config.out : "dist";
-    const resolvedOutDir = path.isAbsolute(outDir)
-        ? outDir
-        : path.resolve(process.cwd(), outDir);
+    const resolvedOutDir = path.isAbsolute(config.out)
+        ? config.out
+        : path.resolve(process.cwd(), config.out);
 
     const coreFile = path.join(CORE_DIR, 'core.js');
     if (!fs.existsSync(coreFile)) {
@@ -85,26 +80,15 @@ async function build(options = {}) {
     let code = fs.readFileSync(coreFile, 'utf8');
 
     // Core plugins
-    if (config.corePlugins && config.corePlugins.length > 0) {
-        code = await appendPlugins(code, CORE_PLUGINS_DIR, config.corePlugins);
-    } else {
-        code = await appendPlugins(code, CORE_PLUGINS_DIR, defaultConfig.corePlugins);
-    }
+    code = await appendPlugins(code, CORE_PLUGINS_DIR, config.corePlugins);
 
     // Optional plugins
-    if (config.optionalPlugins && config.optionalPlugins.length > 0) {
-        code = await appendPlugins(code, PLUGINS_DIR, config.optionalPlugins);
-    }
+    code = await appendPlugins(code, PLUGINS_DIR, config.optionalPlugins);
 
     // User plugins
-    if (config.userPlugins && Array.isArray(config.userPlugins.plugins) && config.userPlugins.plugins.length > 0) {
-        const userPath = config.userPlugins.path && config.userPlugins.path.trim()
-            ? path.resolve(process.cwd(), config.userPlugins.path)
-            : null;
-
-        if (userPath) {
-            code = await appendPlugins(code, userPath, config.userPlugins.plugins);
-        }
+    if (Array.isArray(config.userPlugins.plugins)) {
+        const userPath = path.resolve(process.cwd(), config.userPlugins.path);
+        code = await appendPlugins(code, userPath, config.userPlugins.plugins);
     }
 
     // Minify
