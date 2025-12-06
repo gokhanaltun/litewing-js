@@ -42,11 +42,11 @@ npm install -D litewing
 
 ```javascript
 // vite.config.js
-import LitewingVite from 'litewing/vite/vite-plugin.js';
+import LiteWingVite from 'litewing/vite/vite-plugin';
 
 export default {
   plugins: [
-    LitewingVite({
+    LiteWingVite({
       out: 'dist',
       optionalPlugins: ['lifecycle-hooks']
     })
