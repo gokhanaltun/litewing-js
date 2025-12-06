@@ -1,5 +1,9 @@
 {
-  "out": "build",
+  "out": "dist",
   "corePlugins": ["events", "classes", "attributes", "contents", "actions", "traversal"],
-  "plugins": []
+  "optionalPlugins": [],
+  "userPlugins": {
+    "path": "",
+    "plugins": []
+  }
 }

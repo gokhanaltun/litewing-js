@@ -1,9 +1,9 @@
 {
   "name": "litewing",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Minimal vanilla JS utility library with plugin system",
   "type": "module",
-  "bin": "./litewing-cli.js",
+  "bin": "./cli/litewing-cli.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gokhanaltun/litewing-js.git"
@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/gokhanaltun/litewing-js/issues"
   },
-  "homepage": "https://github.com/gokhanaltun/litewing-js#readme"
+  "homepage": "https://github.com/gokhanaltun/litewing-js#readme",
+  "dependencies": {
+    "terser": "^5.44.1"
+  }
 }
