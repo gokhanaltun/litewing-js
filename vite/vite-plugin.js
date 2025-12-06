@@ -112,7 +112,7 @@ async function build(options = {}) {
     const outputCode = config.minify ? minified.code : code;
 
     fs.mkdirSync(resolvedOutDir, { recursive: true });
-    const outFile = path.join(resolvedOutDir, "litewing.min.js");
+    const outFile = path.join(resolvedOutDir, config.minify ? "litewing.min.js" : "litewing.js");
     fs.writeFileSync(outFile, outputCode);
 
     console.log(`✅ Build done → ${outFile}`);

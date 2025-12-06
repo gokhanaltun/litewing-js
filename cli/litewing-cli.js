@@ -112,11 +112,12 @@ async function build() {
 	}
 
 	// Minify
-	const minified = await minify(code, { ecma: 2020, compress: true, mangle: true });
+	const minified = config.minify ? await minify(code, { ecma: 2020, compress: true, mangle: true }) : code;
+	const outputCode = config.minify ? minified.code : code;
 
 	fs.mkdirSync(resolvedOutDir, { recursive: true });
-	const outFile = path.join(resolvedOutDir, "litewing.min.js");
-	fs.writeFileSync(outFile, minified.code);
+	const outFile = path.join(resolvedOutDir, config.minify ? "litewing.min.js" : "litewing.js");
+	fs.writeFileSync(outFile, outputCode);
 
 	console.log(`✅ Build done → ${outFile}`);
 }

@@ -1,5 +1,6 @@
 {
   "out": "dist",
+  "minify": true,
   "corePlugins": [
     "events",
     "classes",
