@@ -1,41 +1,44 @@
 WrappedElement.prototype.onMount = function (fn) {
-    const elExists = () => this.el && document.body.contains(this.el);
-
-    if (elExists()) {
-        fn(this);
-    } else {
-        const observer = new MutationObserver(() => {
-            if (elExists()) {
-                fn(this);
-                observer.disconnect();
-            }
+    if (this.el) {
+        addMutationObserverCallback(this.el, "onMount", (mutation, cb) => {
+            if (cb.events.includes("onMount") && Array.from(mutation.addedNodes).includes(this.el)) fn(this);
         });
-        observer.observe(document.body, { childList: true, subtree: true });
     }
 
     return this;
 };
 
 WrappedElement.prototype.onUnmount = function (fn) {
-    const observer = new MutationObserver(() => {
-        if (!document.body.contains(this.el)) {
-            fn(this);
-            observer.disconnect();
-        }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    if (this.el) {
+        addMutationObserverCallback(this.el, "onUnmount", (mutation, cb) => {
+            if (cb.events.includes("onUnmount") && Array.from(mutation.removedNodes).includes(this.el)) fn(this);
+        });
+    }
 
     return this;
 };
 
-WrappedElement.prototype.onVisible = function (fn, options = {}) {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+WrappedElement.prototype.onVisible = function (fn) {
+    if (this.el) {
+        addIntersectionObserverCallback(this.el, entry => {
             if (entry.isIntersecting) fn(this);
         });
-    }, options);
-
-    observer.observe(this.el);
+    }
 
     return this;
 };
+
+WrappedElement.prototype.removeOnMount = function () {
+    removeMutationObserverCallback(this.el, "onMount");
+    return this;
+}
+
+WrappedElement.prototype.removeOnUnmount = function () {
+    removeMutationObserverCallback(this.el, "onUnmount");
+    return this;
+}
+
+WrappedElement.prototype.removeOnVisible = function () {
+    removeIntersectionObserverCallback(this.el);
+    return this;
+}
