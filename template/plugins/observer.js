@@ -16,16 +16,9 @@ const intersectionObserver = new IntersectionObserver(entries => {
     });
 });
 
-let isMutationObserverActive = false;
-function startMutationObserver() {
-    if (!isMutationObserverActive) {
-        mutationObserver.observe(document.body, { childList: true, subtree: true });
-        isMutationObserverActive = true;
-    }
-}
+mutationObserver.observe(document.body, { childList: true, subtree: true });
 
 function addMutationObserverCallback(el, event, callback) {
-    startMutationObserver();
     const cb = existsMutationObserverCallback(el);
     if (cb) {
         if (!cb.events.includes(event)) cb.events.push(event);
