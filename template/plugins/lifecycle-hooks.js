@@ -12,8 +12,6 @@ WrappedElement.prototype.onMount = function (fn) {
 
 WrappedElement.prototype.onUnmount = function (fn) {
     if (this.el) {
-        const isInDOM = document.body.contains(this.el);
-        if (isInDOM) fn(this);
         addMutationObserverCallback(this.el, "onUnmount", (mutation, cb) => {
             if (cb.events.includes("onUnmount") && Array.from(mutation.removedNodes).includes(this.el)) fn(this);
         });
