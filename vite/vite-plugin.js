@@ -56,6 +56,7 @@ async function appendPlugins(code, baseDir, names) {
             continue;
         }
 
+        code += `\n\n// --- plugin: ${name} ---\n`;
         code += fs.readFileSync(pluginPath, "utf8");
     }
 
