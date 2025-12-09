@@ -1,17 +1,22 @@
 {
-  "out": "dist",
-  "minify": true,
-  "corePlugins": [
-    "events",
-    "classes",
-    "attributes",
-    "contents",
-    "actions",
-    "traversal"
-  ],
-  "optionalPlugins": [],
-  "userPlugins": {
-    "path": "",
-    "plugins": []
-  }
+	"out": "dist",
+	"minify": true,
+	"corePlugins": [
+		"events",
+		"classes",
+		"attributes",
+		"contents",
+		"actions",
+		"traversal"
+	],
+	"optionalPlugins": [],
+	"userPlugins": {
+		"path": "",
+		"plugins": []
+	},
+	"template": {
+		"src": "litewing-template",
+		"out": "dist/litewing-template",
+		"minify": true
+	}
 }

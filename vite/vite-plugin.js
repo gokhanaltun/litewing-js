@@ -12,15 +12,29 @@ const templatePath = path.join(PROJECT_ROOT, "template");
 const CORE_DIR = path.join(templatePath, "core");
 const CORE_PLUGINS_DIR = path.join(CORE_DIR, "plugins");
 const PLUGINS_DIR = path.join(templatePath, "plugins");
+const templateEnginePath = path.join(PROJECT_ROOT, "template-engine");
+
 const defaultConfig = {
-    "out": "dist",
-    "minify": true,
-    "corePlugins": ["events", "classes", "attributes", "contents", "actions", "traversal"],
-    "optionalPlugins": [],
-    "userPlugins": {
-        "path": "",
-        "plugins": []
-    }
+	"out": "dist",
+	"minify": true,
+	"corePlugins": [
+		"events",
+		"classes",
+		"attributes",
+		"contents",
+		"actions",
+		"traversal"
+	],
+	"optionalPlugins": [],
+	"userPlugins": {
+		"path": "",
+		"plugins": []
+	},
+	"template": {
+		"src": "litewing-template",
+		"out": "dist/litewing-template",
+		"minify": true
+	}
 }
 
 // ----------------------------
@@ -63,8 +77,8 @@ async function appendPlugins(code, baseDir, names) {
     return code;
 }
 
-async function build(options = {}) {
-    let config = loadConfig(options);
+async function compileCore(options = {}) {
+    const config = loadConfig(options);
 
 
     const resolvedOutDir = path.isAbsolute(config.out)
@@ -102,16 +116,62 @@ async function build(options = {}) {
     console.log(`✅ Build done → ${outFile}`);
 }
 
+async function compileTemplates(options = {}) {
+    const config = loadConfig(options);
+
+    const templates = getHtmlFiles(config.template.src);
+    if (templates.length > 0) {
+        fs.mkdirSync(config.template.out, { recursive: true });
+        if (config.template.minify) {
+            const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
+            const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
+            fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
+        } else {
+            fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
+        }
+        for (const t of templates) {
+            const templateStringContent = fs.readFileSync(t, "utf-8");
+            const templateName = path.basename(t, ".html");
+            let templateFunction = compileTemplate(templateStringContent, templateName);
+            if (config.template.minify) {
+                const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
+                templateFunction = minified.code;
+            }
+            fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
+        };
+        console.log(`✅ Template build done → ${config.template.out}`);
+    }
+}
+
+function getHtmlFiles(dir) {
+    let results = [];
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+
+        if (item.isDirectory()) {
+            results.push(...getHtmlFiles(fullPath));
+        } else if (item.isFile() && path.extname(item.name).toLowerCase() === ".html") {
+            results.push(fullPath);
+        }
+    }
+
+    return results;
+}
+
 export default function LiteWingVite(options = {}) {
     return {
         name: 'litewing-vite',
 
         async buildStart() {
-            await build(options);
+            await compileCore(options);
+            await compileTemplates(options);
         },
 
         async generateBundle() {
-            await build(options);
+            await compileCore(options);
+            await compileTemplates(options);
         }
     };
 }

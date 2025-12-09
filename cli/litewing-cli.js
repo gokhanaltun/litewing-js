@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { minify } from 'terser';
+import compileTemplate from '../template-engine/template-engine.js';
 
 const CONFIG_FILE = path.resolve(process.cwd(), 'litewing.config.json');
 
@@ -14,6 +15,30 @@ const templatePath = path.join(PROJECT_ROOT, "template");
 const CORE_DIR = path.join(templatePath, "core");
 const CORE_PLUGINS_DIR = path.join(CORE_DIR, "plugins");
 const PLUGINS_DIR = path.join(templatePath, "plugins");
+const templateEnginePath = path.join(PROJECT_ROOT, "template-engine");
+
+const defaultConfig = {
+	"out": "dist",
+	"minify": true,
+	"corePlugins": [
+		"events",
+		"classes",
+		"attributes",
+		"contents",
+		"actions",
+		"traversal"
+	],
+	"optionalPlugins": [],
+	"userPlugins": {
+		"path": "",
+		"plugins": []
+	},
+	"template": {
+		"src": "litewing-template",
+		"out": "dist/litewing-template",
+		"minify": true
+	}
+}
 
 // ----------------------------
 // CONFIG LOAD
@@ -22,34 +47,42 @@ function loadConfig() {
 	const templateConfig = path.join(templatePath, "litewing.config.json");
 
 	if (!fs.existsSync(CONFIG_FILE)) {
-		if (!fs.existsSync(templateConfig)) {
-			console.log("❌ template config not found");
-			return;
-		}
 		fs.copyFileSync(templateConfig, CONFIG_FILE);
 		console.log(`ℹ️ litewing.config.json created`);
 	}
+
 	try {
-		return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-	} catch {
-		console.log("⚠️ Config could not be parsed, recreating...");
-		fs.unlinkSync(CONFIG_FILE);
-		fs.copyFileSync(templateConfig, CONFIG_FILE);
-		console.log(`ℹ️ litewing.config.json created`);
-		try {
-			return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-		} catch (err) {
-			throw new Error(`❌ Config could not be parsed: ${err}`);
+		const configFromFile = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+		let config = {
+			...defaultConfig,
+			...configFromFile
 		}
+
+		if (configFromFile.userPlugins && typeof configFromFile.userPlugins === 'object') {
+			config.userPlugins = {
+				...defaultConfig.userPlugins,
+				...configFromFile.userPlugins
+			};
+		}
+
+		if (configFromFile.template && typeof configFromFile.template === 'object') {
+			config.template = {
+				...defaultConfig.template,
+				...configFromFile.template
+			};
+		}
+		return config;
+	} catch (err) {
+		console.error("⚠️ Error parsing litewing.config.json:", err.message);
+		return defaultConfig;
 	}
 }
 
-let config;
 
 // ----------------------------
 // BUILD PROCESS
 // ----------------------------
-async function appendPlugins(code, baseDir, names) {
+function appendPlugins(code, baseDir, names) {
 	if (!names || !Array.isArray(names)) return code;
 
 	for (const name of names) {
@@ -67,20 +100,12 @@ async function appendPlugins(code, baseDir, names) {
 	return code;
 }
 
-async function build() {
-	if (!config) {
-		try {
-			config = loadConfig();
-		} catch (err) {
-			console.log(err);
-			return;
-		}
-	}
+async function compileCore() {
+	const config = loadConfig();
 
-	const outDir = config.out && config.out.trim() ? config.out : "dist";
-	const resolvedOutDir = path.isAbsolute(outDir)
-		? outDir
-		: path.resolve(process.cwd(), outDir);
+	const resolvedOutDir = path.isAbsolute(config.out)
+		? config.out
+		: path.resolve(process.cwd(), config.out);
 
 	const coreFile = path.join(CORE_DIR, 'core.js');
 	if (!fs.existsSync(coreFile)) {
@@ -91,36 +116,74 @@ async function build() {
 	let code = fs.readFileSync(coreFile, 'utf8');
 
 	// Core plugins
-	if (config.corePlugins && config.corePlugins.length) {
-		code = await appendPlugins(code, CORE_PLUGINS_DIR, config.corePlugins);
-	}
+	code = appendPlugins(code, CORE_PLUGINS_DIR, config.corePlugins);
 
 	// Optional plugins
-	if (config.optionalPlugins && config.optionalPlugins.length) {
-		code = await appendPlugins(code, PLUGINS_DIR, config.optionalPlugins);
-	}
+	code = appendPlugins(code, PLUGINS_DIR, config.optionalPlugins);
 
 	// User plugins
-	if (config.userPlugins && Array.isArray(config.userPlugins.plugins) && config.userPlugins.plugins.length) {
-		const userPath = config.userPlugins.path && config.userPlugins.path.trim()
-			? path.resolve(process.cwd(), config.userPlugins.path)
-			: null;
-
-		if (userPath) {
-			code = await appendPlugins(code, userPath, config.userPlugins.plugins);
-		}
+	if (Array.isArray(config.userPlugins.plugins)) {
+		const userPath = path.resolve(process.cwd(), config.userPlugins.path);
+		code = appendPlugins(code, userPath, config.userPlugins.plugins);
 	}
 
 	// Minify
-	const minified = config.minify ? await minify(code, { ecma: 2020, compress: true, mangle: true }) : code;
-	const outputCode = config.minify ? minified.code : code;
+	if (config.minify) {
+		const minified = await minify(code, { ecma: 2020, compress: true, mangle: true });
+		code = minified.code;
+	}
 
 	fs.mkdirSync(resolvedOutDir, { recursive: true });
 	const outFile = path.join(resolvedOutDir, config.minify ? "litewing.min.js" : "litewing.js");
-	fs.writeFileSync(outFile, outputCode);
+	fs.writeFileSync(outFile, code);
 
 	console.log(`✅ Build done → ${outFile}`);
 }
+
+async function compileTemplates() {
+	const config = loadConfig();
+
+	const templates = getHtmlFiles(config.template.src);
+	if (templates.length > 0) {
+		fs.mkdirSync(config.template.out, { recursive: true });
+		if (config.template.minify) {
+			const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
+			const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
+			fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
+		} else {
+			fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
+		}
+		for (const t of templates) {
+			const templateStringContent = fs.readFileSync(t, "utf-8");
+			const templateName = path.basename(t, ".html");
+			let templateFunction = compileTemplate(templateStringContent, templateName);
+			if (config.template.minify) {
+				const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
+				templateFunction = minified.code;
+			}
+			fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
+		};
+		console.log(`✅ Template build done → ${config.template.out}`);
+	}
+}
+
+function getHtmlFiles(dir) {
+    let results = [];
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+
+        if (item.isDirectory()) {
+            results.push(...getHtmlFiles(fullPath));
+        } else if (item.isFile() && path.extname(item.name).toLowerCase() === ".html") {
+            results.push(fullPath);
+        }
+    }
+
+    return results;
+}
+
 
 // ----------------------------
 // COMMAND ROUTER
@@ -131,14 +194,15 @@ const command = args[0];
 switch (command) {
 	case "init":
 		try {
-			config = loadConfig();
+			loadConfig();
 		} catch (err) {
 			console.log(err);
 		}
 		break;
 
 	case "build":
-		await build();
+		await compileCore();
+		await compileTemplates();
 		break;
 
 	default:
