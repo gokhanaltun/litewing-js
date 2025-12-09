@@ -142,46 +142,47 @@ async function compileCore() {
 
 async function compileTemplates() {
 	const config = loadConfig();
-
-	const templates = getHtmlFiles(config.template.src);
-	if (templates.length > 0) {
-		fs.mkdirSync(config.template.out, { recursive: true });
-		if (config.template.minify) {
-			const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
-			const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
-			fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
-		} else {
-			fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
-		}
-		for (const t of templates) {
-			const templateStringContent = fs.readFileSync(t, "utf-8");
-			const templateName = path.basename(t, ".html");
-			let templateFunction = compileTemplate(templateStringContent, templateName);
+	if (fs.existsSync(config.template.src)) {
+		const templates = getHtmlFiles(config.template.src);
+		if (templates.length > 0) {
+			fs.mkdirSync(config.template.out, { recursive: true });
 			if (config.template.minify) {
-				const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
-				templateFunction = minified.code;
+				const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
+				const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
+				fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
+			} else {
+				fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
 			}
-			fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
-		};
-		console.log(`✅ Template build done → ${config.template.out}`);
+			for (const t of templates) {
+				const templateStringContent = fs.readFileSync(t, "utf-8");
+				const templateName = path.basename(t, ".html");
+				let templateFunction = compileTemplate(templateStringContent, templateName);
+				if (config.template.minify) {
+					const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
+					templateFunction = minified.code;
+				}
+				fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
+			};
+			console.log(`✅ Template build done → ${config.template.out}`);
+		}
 	}
 }
 
 function getHtmlFiles(dir) {
-    let results = [];
-    const items = fs.readdirSync(dir, { withFileTypes: true });
+	let results = [];
+	const items = fs.readdirSync(dir, { withFileTypes: true });
 
-    for (const item of items) {
-        const fullPath = path.join(dir, item.name);
+	for (const item of items) {
+		const fullPath = path.join(dir, item.name);
 
-        if (item.isDirectory()) {
-            results.push(...getHtmlFiles(fullPath));
-        } else if (item.isFile() && path.extname(item.name).toLowerCase() === ".html") {
-            results.push(fullPath);
-        }
-    }
+		if (item.isDirectory()) {
+			results.push(...getHtmlFiles(fullPath));
+		} else if (item.isFile() && path.extname(item.name).toLowerCase() === ".html") {
+			results.push(fullPath);
+		}
+	}
 
-    return results;
+	return results;
 }
 
 

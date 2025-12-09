@@ -15,26 +15,26 @@ const PLUGINS_DIR = path.join(templatePath, "plugins");
 const templateEnginePath = path.join(PROJECT_ROOT, "template-engine");
 
 const defaultConfig = {
-	"out": "dist",
-	"minify": true,
-	"corePlugins": [
-		"events",
-		"classes",
-		"attributes",
-		"contents",
-		"actions",
-		"traversal"
-	],
-	"optionalPlugins": [],
-	"userPlugins": {
-		"path": "",
-		"plugins": []
-	},
-	"template": {
-		"src": "litewing-template",
-		"out": "dist/litewing-template",
-		"minify": true
-	}
+    "out": "dist",
+    "minify": true,
+    "corePlugins": [
+        "events",
+        "classes",
+        "attributes",
+        "contents",
+        "actions",
+        "traversal"
+    ],
+    "optionalPlugins": [],
+    "userPlugins": {
+        "path": "",
+        "plugins": []
+    },
+    "template": {
+        "src": "litewing-template",
+        "out": "dist/litewing-template",
+        "minify": true
+    }
 }
 
 // ----------------------------
@@ -116,30 +116,31 @@ async function compileCore(options = {}) {
     console.log(`✅ Build done → ${outFile}`);
 }
 
-async function compileTemplates(options = {}) {
-    const config = loadConfig(options);
-
-    const templates = getHtmlFiles(config.template.src);
-    if (templates.length > 0) {
-        fs.mkdirSync(config.template.out, { recursive: true });
-        if (config.template.minify) {
-            const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
-            const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
-            fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
-        } else {
-            fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
-        }
-        for (const t of templates) {
-            const templateStringContent = fs.readFileSync(t, "utf-8");
-            const templateName = path.basename(t, ".html");
-            let templateFunction = compileTemplate(templateStringContent, templateName);
+async function compileTemplates() {
+    const config = loadConfig();
+    if (fs.existsSync(config.template.src)) {
+        const templates = getHtmlFiles(config.template.src);
+        if (templates.length > 0) {
+            fs.mkdirSync(config.template.out, { recursive: true });
             if (config.template.minify) {
-                const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
-                templateFunction = minified.code;
+                const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
+                const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
+                fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
+            } else {
+                fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
             }
-            fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
-        };
-        console.log(`✅ Template build done → ${config.template.out}`);
+            for (const t of templates) {
+                const templateStringContent = fs.readFileSync(t, "utf-8");
+                const templateName = path.basename(t, ".html");
+                let templateFunction = compileTemplate(templateStringContent, templateName);
+                if (config.template.minify) {
+                    const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
+                    templateFunction = minified.code;
+                }
+                fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
+            };
+            console.log(`✅ Template build done → ${config.template.out}`);
+        }
     }
 }
 
