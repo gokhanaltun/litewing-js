@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { minify } from 'terser';
-import compileTemplate from '../template-engine/template-engine.js';
 
 const CONFIG_FILE = path.resolve(process.cwd(), 'litewing.config.json');
 
@@ -15,7 +14,6 @@ const templatePath = path.join(PROJECT_ROOT, "template");
 const CORE_DIR = path.join(templatePath, "core");
 const CORE_PLUGINS_DIR = path.join(CORE_DIR, "plugins");
 const PLUGINS_DIR = path.join(templatePath, "plugins");
-const templateEnginePath = path.join(PROJECT_ROOT, "template-engine");
 
 const defaultConfig = {
 	"out": "dist",
@@ -32,11 +30,6 @@ const defaultConfig = {
 	"userPlugins": {
 		"path": "",
 		"plugins": []
-	},
-	"template": {
-		"src": "litewing-template",
-		"out": "dist/litewing-template",
-		"minify": true
 	}
 }
 
@@ -140,51 +133,6 @@ async function compileCore() {
 	console.log(`✅ Build done → ${outFile}`);
 }
 
-async function compileTemplates() {
-	const config = loadConfig();
-	if (fs.existsSync(config.template.src)) {
-		const templates = getHtmlFiles(config.template.src);
-		if (templates.length > 0) {
-			fs.mkdirSync(config.template.out, { recursive: true });
-			if (config.template.minify) {
-				const sterilizationJS = fs.readFileSync(path.join(templateEnginePath, "sterilization.js"), "utf-8");
-				const minifiedJS = await minify(sterilizationJS, { ecma: 2020, compress: true, mangle: true });
-				fs.writeFileSync(path.join(config.template.out, "sterilization.min.js"), minifiedJS.code);
-			} else {
-				fs.copyFileSync(path.join(templateEnginePath, "sterilization.js"), path.join(config.template.out, "sterilization.js"));
-			}
-			for (const t of templates) {
-				const templateStringContent = fs.readFileSync(t, "utf-8");
-				const templateName = path.basename(t, ".html");
-				let templateFunction = compileTemplate(templateStringContent, templateName);
-				if (config.template.minify) {
-					const minified = await minify(templateFunction, { ecma: 2020, compress: true, mangle: true });
-					templateFunction = minified.code;
-				}
-				fs.writeFileSync(path.join(config.template.out, config.template.minify ? `${templateName}.min.js` : `${templateName}.js`), templateFunction);
-			};
-			console.log(`✅ Template build done → ${config.template.out}`);
-		}
-	}
-}
-
-function getHtmlFiles(dir) {
-	let results = [];
-	const items = fs.readdirSync(dir, { withFileTypes: true });
-
-	for (const item of items) {
-		const fullPath = path.join(dir, item.name);
-
-		if (item.isDirectory()) {
-			results.push(...getHtmlFiles(fullPath));
-		} else if (item.isFile() && path.extname(item.name).toLowerCase() === ".html") {
-			results.push(fullPath);
-		}
-	}
-
-	return results;
-}
-
 
 // ----------------------------
 // COMMAND ROUTER
@@ -203,7 +151,6 @@ switch (command) {
 
 	case "build":
 		await compileCore();
-		await compileTemplates();
 		break;
 
 	default:

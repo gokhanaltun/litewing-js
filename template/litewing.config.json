@@ -13,10 +13,5 @@
 	"userPlugins": {
 		"path": "",
 		"plugins": []
-	},
-	"template": {
-		"src": "litewing-template",
-		"out": "dist/litewing-template",
-		"minify": true
 	}
 }

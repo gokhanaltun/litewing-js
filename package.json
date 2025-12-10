@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/gokhanaltun/litewing-js#readme",
   "dependencies": {
-    "parse5": "^8.0.0",
     "terser": "^5.44.1"
   }
 }
